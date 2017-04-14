@@ -50,39 +50,13 @@ __all__ = ['read', 'read_multipage', 'read_metadata', 'read_multipage_metadata',
 
 def load_freeimage():
     if sys.platform == 'win32':
-        loader = ctypes.windll
+        dlltype = ctypes.WinDLL
         functype = ctypes.WINFUNCTYPE
     else:
-        loader = ctypes.cdll
+        dlltype = ctypes.CDLL
         functype = ctypes.CFUNCTYPE
-
-    freeimage = None
-    errors = []
-    possible_freeimage_libs = glob.glob(os.path.join(os.path.dirname(__file__), '_freeimage.*'))
-    for lib in possible_freeimage_libs:
-        try:
-            freeimage = loader.LoadLibrary(lib)
-            break
-        except Exception:
-            # Get exception instance in Python 2.x/3.x compatible manner
-            e_type, e_value, e_tb = sys.exc_info()
-            del e_tb
-            errors.append((lib, e_value))
-
-    if freeimage is None:
-        if errors:
-            # No freeimage library loaded, and load-errors reported for some
-            # candidate libs
-            err_txt = ['%s:\n%s' % (l, str(e.args[0])) for l, e in errors]
-            raise RuntimeError('One or more FreeImage libraries were found, but '
-                               'could not be loaded due to the following errors:\n'
-                               '\n\n'.join(err_txt))
-        else:
-            # No errors, because no potential libraries found at all!
-            raise RuntimeError('Could not find a FreeImage library in any of:\n' +
-                               '\n'.join(lib_dirs))
-
-    # FreeImage found
+    from . import _freeimage
+    freeimage = dlltype(_freeimage.__file__)
     @functype(None, ctypes.c_int, ctypes.c_char_p)
     def error_handler(fif, message):
         raise RuntimeError('FreeImage error: %s' % message)
