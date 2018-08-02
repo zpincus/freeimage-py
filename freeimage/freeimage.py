@@ -27,22 +27,6 @@ import numpy
 import sys
 import os.path
 import glob
-from numpy.compat import asbytes, asstr
-if bytes is str:
-    # python 2
-    asbytes = str
-    asstr = str
-else:
-    _encoding = sys.getdefaultencoding()
-    def asstr(s):
-        if isinstance(s, bytes):
-            return s.decode(_encoding)
-        return str(s)
-
-    def asbytes(s):
-        if isinstance(s, bytes):
-            return s
-        return str(s).encode(_encoding)
 
 __all__ = ['read', 'read_multipage', 'read_metadata', 'read_multipage_metadata',
     'write', 'write_multipage', 'IO_FLAGS', 'METADATA_MODELS']
@@ -62,9 +46,9 @@ def load_freeimage():
         raise RuntimeError('FreeImage error: %s' % message)
 
     freeimage.FreeImage_SetOutputMessage(error_handler)
-    return freeimage
+    return freeimage, error_handler
 
-_FI = load_freeimage()
+_FI, _ERRHANDLER = load_freeimage() # errhandler needs to stick around and not be deleted
 
 API = {
     # All we're doing here is telling ctypes that some of the FreeImage
@@ -88,9 +72,6 @@ API = {
     'FreeImage_LockPage': (ctypes.c_void_p, None),
     'FreeImage_OpenMultiBitmap': (ctypes.c_void_p, None)
     }
-
-# Albert's ctypes pattern
-
 
 def register_api(lib, api):
     for f, (restype, argtypes) in api.items():
@@ -334,21 +315,20 @@ class METADATA_DATATYPE(object):
         }
 
 def _validate_file(filename):
-    filename_s = asstr(filename)
-    filename_b = asbytes(filename)
-    if not os.path.exists(filename_s):
-        raise FileNotFoundError('No such file: %s' % filename_s)
+    if not os.path.exists(filename):
+        raise FileNotFoundError('No such file: %s' % filename)
+    filename_b = filename.encode()
     ftype = _FI.FreeImage_GetFileType(filename_b, 0)
     if ftype == -1:
-        raise ValueError('Cannot determine type of file %s' % filename_s)
-    return filename_s, filename_b, ftype
+        raise ValueError('Cannot determine type of file %s' % filename)
+    return filename_b, ftype
 
 def _process_bitmap(filename, flags, process_func):
-    filename_s, filename_b, ftype = _validate_file(filename)
+    filename_b, ftype = _validate_file(filename)
     bitmap = _FI.FreeImage_Load(ftype, filename_b, flags)
     bitmap = ctypes.c_void_p(bitmap)
     if not bitmap:
-        raise ValueError('Could not load file %s' % filename_s)
+        raise ValueError('Could not load file %s' % filename)
     try:
         return process_func(bitmap)
     finally:
@@ -378,7 +358,7 @@ def read_metadata(filename):
 
 
 def _process_multipage(filename, flags, process_func):
-    filename_s, filename_b, ftype = _validate_file(filename)
+    filename_b, ftype = _validate_file(filename)
     create_new = False
     read_only = True
     keep_cache_in_memory = True
@@ -387,7 +367,7 @@ def _process_multipage(filename, flags, process_func):
                                                 flags)
     multibitmap = ctypes.c_void_p(multibitmap)
     if not multibitmap:
-        raise ValueError('Could not open %s as multi-page image.' % filename_s)
+        raise ValueError('Could not open %s as multi-page image.' % filename)
     try:
         pages = _FI.FreeImage_GetPageCount(multibitmap)
         out = []
@@ -396,7 +376,7 @@ def _process_multipage(filename, flags, process_func):
             bitmap = ctypes.c_void_p(bitmap)
             if not bitmap:
                 raise ValueError('Could not open %s as a multi-page image.'
-                                  % filename_s)
+                                  % filename)
             try:
                 out.append(process_func(bitmap))
             finally:
@@ -484,13 +464,13 @@ def _read_metadata(bitmap):
         if mdhandle:
             more = True
             while more:
-                tag_name = asstr(_FI.FreeImage_GetTagKey(tag))
+                tag_name = _FI.FreeImage_GetTagKey(tag).decode()
                 tag_type = _FI.FreeImage_GetTagType(tag)
                 byte_size = _FI.FreeImage_GetTagLength(tag)
                 char_ptr = ctypes.c_char * byte_size
                 tag_str = char_ptr.from_address(_FI.FreeImage_GetTagValue(tag))
                 if tag_type == METADATA_DATATYPE.FIDT_ASCII:
-                    tag_val = asstr(tag_str.value)
+                    tag_val = tag_str.value.decode()
                 else:
                     tag_val = numpy.fromstring(tag_str,
                             dtype=METADATA_DATATYPE.dtypes[tag_type])
@@ -511,11 +491,11 @@ def write(array, filename, flags=0):
     (See the source-code comments for more details.)
     """
     array = numpy.asarray(array)
-    filename_s = asstr(filename)
-    filename_b = asbytes(filename)
+    filename_b = filename.encode()
+
     ftype = _FI.FreeImage_GetFIFFromFilename(filename_b)
     if ftype == -1:
-        raise ValueError('Cannot determine type for %s' % filename_s)
+        raise ValueError('Cannot determine type for %s' % filename)
     bitmap, fi_type = _array_to_bitmap(array)
     try:
         if fi_type == FI_TYPES.FIT_BITMAP:
@@ -527,7 +507,7 @@ def write(array, filename, flags=0):
             raise TypeError('Cannot save image of this format to this file type.')
         res = _FI.FreeImage_Save(ftype, bitmap, filename_b, flags)
         if not res:
-            raise RuntimeError('Could not save image %s.' % filename_s)
+            raise RuntimeError('Could not save image %s.' % filename)
     finally:
         _FI.FreeImage_Unload(bitmap)
 
@@ -540,11 +520,10 @@ def write_multipage(arrays, filename, flags=0):
     class defined in this module, or-ed together with | as appropriate.
     (See the source-code comments for more details.)
     """
-    filename_s = asstr(filename)
-    filename_b = asbytes(filename)
+    filename_b = filename.encode()
     ftype = _FI.FreeImage_GetFIFFromFilename(filename_b)
     if ftype == -1:
-        raise ValueError('Cannot determine type of file %s' % filename_s)
+        raise ValueError('Cannot determine type of file %s' % filename)
     create_new = True
     read_only = False
     keep_cache_in_memory = True
@@ -553,8 +532,7 @@ def write_multipage(arrays, filename, flags=0):
                                                 keep_cache_in_memory, 0)
     multibitmap = ctypes.c_void_p(multibitmap)
     if not multibitmap:
-        raise ValueError('Could not open %s for writing multi-page image.' %
-                         filename_s)
+        raise ValueError('Could not open %s for writing multi-page image.' % filename)
     try:
         for array in arrays:
             array = numpy.asarray(array)

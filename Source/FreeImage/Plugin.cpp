@@ -265,15 +265,15 @@ FreeImage_Initialise(BOOL load_local_plugins_only) {
 	        s_plugins->AddNode(InitHDR);
 			s_plugins->AddNode(InitG3);
 			s_plugins->AddNode(InitSGI);
-//			s_plugins->AddNode(InitEXR);
-//			s_plugins->AddNode(InitJ2K);
-//			s_plugins->AddNode(InitJP2);
+			s_plugins->AddNode(InitEXR);
+			s_plugins->AddNode(InitJ2K);
+			s_plugins->AddNode(InitJP2);
 			s_plugins->AddNode(InitPFM);
 			s_plugins->AddNode(InitPICT);
-//			s_plugins->AddNode(InitRAW);
-//			s_plugins->AddNode(InitWEBP);
+			s_plugins->AddNode(InitRAW);
+			s_plugins->AddNode(InitWEBP);
 #if !(defined(_MSC_VER) && (_MSC_VER <= 1310))
-//			s_plugins->AddNode(InitJXR);
+			s_plugins->AddNode(InitJXR);
 #endif // unsupported by MS Visual Studio 2003 !!!
 
 			// external plugin initialization
@@ -464,12 +464,10 @@ FreeImage_SaveToHandle(FREE_IMAGE_FORMAT fif, FIBITMAP *dib, FreeImageIO *io, fi
 	return FALSE;
 }
 
-
 BOOL DLL_CALLCONV
 FreeImage_Save(FREE_IMAGE_FORMAT fif, FIBITMAP *dib, const char *filename, int flags) {
 	FreeImageIO io;
 	SetDefaultIO(&io);
-
 	FILE *handle = fopen(filename, "w+b");
 
 	if (handle) {
@@ -801,7 +799,7 @@ FreeImage_GetFIFFromFilenameU(const wchar_t *filename) {
 }
 
 BOOL DLL_CALLCONV
-FreeImage_Validate(FREE_IMAGE_FORMAT fif, FreeImageIO *io, fi_handle handle) {
+FreeImage_ValidateFIF(FREE_IMAGE_FORMAT fif, FreeImageIO *io, fi_handle handle) {
 	if (s_plugins != NULL) {
 		BOOL validated = FALSE;
 
