@@ -1,4 +1,4 @@
-import distutils.core
+import setuptools
 
 SRCS = '''Source/FreeImage/BitmapAccess.cpp
 Source/FreeImage/ColorLookup.cpp
@@ -209,12 +209,14 @@ Source/LibTIFF4
 Source/ZLib
 Source/OpenEXR/Half'''.split('\n')
 
-freeimage = distutils.core.Extension('freeimage._freeimage',
+freeimage = setuptools.Extension('freeimage._freeimage',
     sources = ['freeimage/_freeimage.c'] + SRCS,
     include_dirs = INCLUDE)
 
-distutils.core.setup(name = 'freeimage',
-        version = '1.0',
-        description = 'freeimage package',
-        ext_modules = [freeimage],
-        packages = ['freeimage'])
+setuptools.setup(
+    name = 'freeimage',
+    version = '1.1',
+    description = 'freeimage package',
+    ext_modules = [freeimage],
+    packages = setuptools.find_packages()
+)
