@@ -317,7 +317,7 @@ class METADATA_DATATYPE(object):
 def _validate_file(filename):
     if not os.path.exists(filename):
         raise FileNotFoundError('No such file: %s' % filename)
-    filename_b = filename.encode()
+    filename_b = str(filename).encode()
     ftype = _FI.FreeImage_GetFileType(filename_b, 0)
     if ftype == -1:
         raise ValueError('Cannot determine type of file %s' % filename)
@@ -491,7 +491,7 @@ def write(array, filename, flags=0):
     (See the source-code comments for more details.)
     """
     array = numpy.asarray(array)
-    filename_b = filename.encode()
+    filename_b = str(filename).encode()
 
     ftype = _FI.FreeImage_GetFIFFromFilename(filename_b)
     if ftype == -1:
@@ -520,7 +520,7 @@ def write_multipage(arrays, filename, flags=0):
     class defined in this module, or-ed together with | as appropriate.
     (See the source-code comments for more details.)
     """
-    filename_b = filename.encode()
+    filename_b = str(filename).encode()
     ftype = _FI.FreeImage_GetFIFFromFilename(filename_b)
     if ftype == -1:
         raise ValueError('Cannot determine type of file %s' % filename)
