@@ -1,4 +1,9 @@
 import setuptools
+import platform
+from distutils import sysconfig
+from distutils import version
+import os
+import sys
 
 # below is just all the sources listed in freeimage's Makefile.srcs, with the
 # addition of Source/LibJXR/image/sys/perfTimerANSI.c which is missing for some
@@ -505,6 +510,20 @@ Source/LibJXR/common/include
 Source/LibJXR/image/sys
 Source/LibJXR/jxrgluelib
 '''.strip().split()
+
+# For mac, ensure extensions are built for macos 10.9 when compiling on a
+# 10.9 system or above, overriding distuitls behaviour which is to target
+# the version that python was built for. This may be overridden by setting
+# MACOSX_DEPLOYMENT_TARGET before calling setup.py
+# If below is not included, or 10.14 and above, the C++ standard headers may
+# not be found.
+if sys.platform == 'darwin':
+    if 'MACOSX_DEPLOYMENT_TARGET' not in os.environ:
+        current_system = version.LooseVersion(platform.mac_ver()[0])
+        python_target = version.LooseVersion(sysconfig.get_config_var('MACOSX_DEPLOYMENT_TARGET'))
+        if python_target < '10.9' and current_system >= '10.9':
+            os.environ['MACOSX_DEPLOYMENT_TARGET'] = '10.9'
+
 
 freeimage = setuptools.Extension(
     name = 'freeimage._freeimage',
