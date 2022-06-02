@@ -6,6 +6,7 @@
 // - Rui Lopes (ruiglopes@yahoo.com)
 // - Detlev Vendt (detlev.vendt@brillit.de)
 // - Petr Pytelka (pyta@lightcomp.com)
+// - Hervé Drolon (drolon@infonie.fr)
 //
 // This file is part of FreeImage 3
 //
@@ -22,11 +23,12 @@
 // Use at your own risk!
 // =====================================================================
 
-#ifdef _MSC_VER
+#ifdef _MSC_VER 
 #pragma warning (disable : 4786) // identifier was truncated to 'number' characters
 #endif
 
 #ifdef _WIN32
+#define WIN32_LEAN_AND_MEAN      //< fixup for mingw-w64
 #include <windows.h>
 #include <io.h>
 #else
@@ -218,9 +220,9 @@ FreeImage_GetPluginList() {
 void DLL_CALLCONV
 FreeImage_Initialise(BOOL load_local_plugins_only) {
 	if (s_plugin_reference_count++ == 0) {
-
+		
 		/*
-		Note: initialize all singletons here
+		Note: initialize all singletons here 
 		in order to avoid race conditions with multi-threading
 		*/
 
@@ -232,9 +234,9 @@ FreeImage_Initialise(BOOL load_local_plugins_only) {
 		s_plugins = new(std::nothrow) PluginList;
 
 		if (s_plugins) {
-			/* NOTE :
-			The order used to initialize internal plugins below MUST BE the same order
-			as the one used to define the FREE_IMAGE_FORMAT enum.
+			/* NOTE : 
+			The order used to initialize internal plugins below MUST BE the same order 
+			as the one used to define the FREE_IMAGE_FORMAT enum. 
 			*/
 			s_plugins->AddNode(InitBMP);
 			s_plugins->AddNode(InitICO);
@@ -272,29 +274,26 @@ FreeImage_Initialise(BOOL load_local_plugins_only) {
 			s_plugins->AddNode(InitPICT);
 			s_plugins->AddNode(InitRAW);
 			s_plugins->AddNode(InitWEBP);
-#if !(defined(_MSC_VER) && (_MSC_VER <= 1310))
 			s_plugins->AddNode(InitJXR);
-#endif // unsupported by MS Visual Studio 2003 !!!
-
+			
 			// external plugin initialization
 
 #ifdef _WIN32
 			if (!load_local_plugins_only) {
+				const DWORD nPathSize = 8 * _MAX_PATH;	// should be enough to handle a path
 				int count = 0;
-				char buffer[MAX_PATH + 200];
-				wchar_t current_dir[2 * _MAX_PATH], module[2 * _MAX_PATH];
+				char buffer[nPathSize];
+				wchar_t current_dir[nPathSize];
+				wchar_t module_name[nPathSize];
 				BOOL bOk = FALSE;
 
-				// store the current directory. then set the directory to the application location
-
-				if (GetCurrentDirectoryW(2 * _MAX_PATH, current_dir) != 0) {
-					if (GetModuleFileNameW(NULL, module, 2 * _MAX_PATH) != 0) {
-						wchar_t *last_point = wcsrchr(module, L'\\');
-
+				// store the current directory, then set the directory to the application location
+				if (GetCurrentDirectoryW(nPathSize, current_dir) != 0) {
+					if (GetModuleFileNameW(NULL, module_name, nPathSize) != 0) {
+						wchar_t *last_point = wcsrchr(module_name, L'\\');
 						if (last_point) {
 							*last_point = L'\0';
-
-							bOk = SetCurrentDirectoryW(module);
+							bOk = SetCurrentDirectoryW(module_name);
 						}
 					}
 				}
@@ -311,7 +310,7 @@ FreeImage_Initialise(BOOL load_local_plugins_only) {
 					if ((find_handle = (long)_findfirst(buffer, &find_data)) != -1L) {
 						do {
 							strcpy(buffer, s_search_list[count]);
-							strncat(buffer, find_data.name, MAX_PATH + 200);
+							strncat(buffer, find_data.name, nPathSize);
 
 							HINSTANCE instance = LoadLibrary(buffer);
 
@@ -380,15 +379,15 @@ FIBITMAP * DLL_CALLCONV
 FreeImage_LoadFromHandle(FREE_IMAGE_FORMAT fif, FreeImageIO *io, fi_handle handle, int flags) {
 	if ((fif >= 0) && (fif < FreeImage_GetFIFCount())) {
 		PluginNode *node = s_plugins->FindNodeFromFIF(fif);
-
+		
 		if (node != NULL) {
 			if(node->m_plugin->load_proc != NULL) {
 				void *data = FreeImage_Open(node, io, handle, TRUE);
-
+					
 				FIBITMAP *bitmap = node->m_plugin->load_proc(io, handle, -1, flags, data);
-
+					
 				FreeImage_Close(node, io, handle, data);
-
+					
 				return bitmap;
 			}
 		}
@@ -401,7 +400,7 @@ FIBITMAP * DLL_CALLCONV
 FreeImage_Load(FREE_IMAGE_FORMAT fif, const char *filename, int flags) {
 	FreeImageIO io;
 	SetDefaultIO(&io);
-
+	
 	FILE *handle = fopen(filename, "rb");
 
 	if (handle) {
@@ -421,7 +420,7 @@ FIBITMAP * DLL_CALLCONV
 FreeImage_LoadU(FREE_IMAGE_FORMAT fif, const wchar_t *filename, int flags) {
 	FreeImageIO io;
 	SetDefaultIO(&io);
-#ifdef _WIN32
+#ifdef _WIN32	
 	FILE *handle = _wfopen(filename, L"rb");
 
 	if (handle) {
@@ -447,15 +446,15 @@ FreeImage_SaveToHandle(FREE_IMAGE_FORMAT fif, FIBITMAP *dib, FreeImageIO *io, fi
 
 	if ((fif >= 0) && (fif < FreeImage_GetFIFCount())) {
 		PluginNode *node = s_plugins->FindNodeFromFIF(fif);
-
+		
 		if (node) {
 			if(node->m_plugin->save_proc != NULL) {
 				void *data = FreeImage_Open(node, io, handle, FALSE);
-
+					
 				BOOL result = node->m_plugin->save_proc(io, dib, handle, -1, flags, data);
-
+					
 				FreeImage_Close(node, io, handle, data);
-
+					
 				return result;
 			}
 		}
@@ -464,12 +463,14 @@ FreeImage_SaveToHandle(FREE_IMAGE_FORMAT fif, FIBITMAP *dib, FreeImageIO *io, fi
 	return FALSE;
 }
 
+
 BOOL DLL_CALLCONV
 FreeImage_Save(FREE_IMAGE_FORMAT fif, FIBITMAP *dib, const char *filename, int flags) {
 	FreeImageIO io;
 	SetDefaultIO(&io);
+	
 	FILE *handle = fopen(filename, "w+b");
-
+	
 	if (handle) {
 		BOOL success = FreeImage_SaveToHandle(fif, dib, &io, (fi_handle)handle, flags);
 
@@ -487,9 +488,9 @@ BOOL DLL_CALLCONV
 FreeImage_SaveU(FREE_IMAGE_FORMAT fif, FIBITMAP *dib, const wchar_t *filename, int flags) {
 	FreeImageIO io;
 	SetDefaultIO(&io);
-#ifdef _WIN32
+#ifdef _WIN32	
 	FILE *handle = _wfopen(filename, L"w+b");
-
+	
 	if (handle) {
 		BOOL success = FreeImage_SaveToHandle(fif, dib, &io, (fi_handle)handle, flags);
 
@@ -558,7 +559,7 @@ FreeImage_IsPluginEnabled(FREE_IMAGE_FORMAT fif) {
 
 		return (node != NULL) ? node->m_enabled : FALSE;
 	}
-
+	
 	return -1;
 }
 
@@ -604,7 +605,7 @@ FreeImage_GetFormatFromFIF(FREE_IMAGE_FORMAT fif) {
 	return NULL;
 }
 
-const char * DLL_CALLCONV
+const char * DLL_CALLCONV 
 FreeImage_GetFIFMimeType(FREE_IMAGE_FORMAT fif) {
 	if (s_plugins != NULL) {
 		PluginNode *node = s_plugins->FindNodeFromFIF(fif);
@@ -675,8 +676,8 @@ FreeImage_FIFSupportsExportBPP(FREE_IMAGE_FORMAT fif, int depth) {
 	if (s_plugins != NULL) {
 		PluginNode *node = s_plugins->FindNodeFromFIF(fif);
 
-		return (node != NULL) ?
-			(node->m_plugin->supports_export_bpp_proc != NULL) ?
+		return (node != NULL) ? 
+			(node->m_plugin->supports_export_bpp_proc != NULL) ? 
 				node->m_plugin->supports_export_bpp_proc(depth) : FALSE : FALSE;
 	}
 
@@ -688,8 +689,8 @@ FreeImage_FIFSupportsExportType(FREE_IMAGE_FORMAT fif, FREE_IMAGE_TYPE type) {
 	if (s_plugins != NULL) {
 		PluginNode *node = s_plugins->FindNodeFromFIF(fif);
 
-		return (node != NULL) ?
-			(node->m_plugin->supports_export_type_proc != NULL) ?
+		return (node != NULL) ? 
+			(node->m_plugin->supports_export_type_proc != NULL) ? 
 				node->m_plugin->supports_export_type_proc(type) : FALSE : FALSE;
 	}
 
@@ -701,8 +702,8 @@ FreeImage_FIFSupportsICCProfiles(FREE_IMAGE_FORMAT fif) {
 	if (s_plugins != NULL) {
 		PluginNode *node = s_plugins->FindNodeFromFIF(fif);
 
-		return (node != NULL) ?
-			(node->m_plugin->supports_icc_profiles_proc != NULL) ?
+		return (node != NULL) ? 
+			(node->m_plugin->supports_icc_profiles_proc != NULL) ? 
 				node->m_plugin->supports_icc_profiles_proc() : FALSE : FALSE;
 	}
 
@@ -714,8 +715,8 @@ FreeImage_FIFSupportsNoPixels(FREE_IMAGE_FORMAT fif) {
 	if (s_plugins != NULL) {
 		PluginNode *node = s_plugins->FindNodeFromFIF(fif);
 
-		return (node != NULL) ?
-			(node->m_plugin->supports_no_pixels_proc != NULL) ?
+		return (node != NULL) ? 
+			(node->m_plugin->supports_no_pixels_proc != NULL) ? 
 				node->m_plugin->supports_no_pixels_proc() : FALSE : FALSE;
 	}
 
@@ -729,7 +730,7 @@ FreeImage_GetFIFFromFilename(const char *filename) {
 
 		// get the proper extension if we received a filename
 
-		char *place = strrchr((char *)filename, '.');
+		char *place = strrchr((char *)filename, '.');	
 		extension = (place != NULL) ? ++place : filename;
 
 		// look for the extension in the plugin table
@@ -766,7 +767,7 @@ FreeImage_GetFIFFromFilename(const char *filename) {
 					// free the copy of the extension list
 
 					free(copy);
-				}
+				}	
 			}
 		}
 	}
@@ -774,13 +775,13 @@ FreeImage_GetFIFFromFilename(const char *filename) {
 	return FIF_UNKNOWN;
 }
 
-FREE_IMAGE_FORMAT DLL_CALLCONV
+FREE_IMAGE_FORMAT DLL_CALLCONV 
 FreeImage_GetFIFFromFilenameU(const wchar_t *filename) {
-#ifdef _WIN32
+#ifdef _WIN32	
 	if (filename == NULL) return FIF_UNKNOWN;
-
+    	
 	// get the proper extension if we received a filename
-	wchar_t *place = wcsrchr((wchar_t *)filename, '.');
+	wchar_t *place = wcsrchr((wchar_t *)filename, '.');	
 	if (place == NULL) return FIF_UNKNOWN;
 	// convert to single character - no national chars in extensions
 	char *extension = (char *)malloc(wcslen(place)+1);

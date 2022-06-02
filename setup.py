@@ -363,6 +363,7 @@ Source/LibWebP/src/dsp/alpha_processing_sse41.c
 Source/LibWebP/src/dsp/cost.c
 Source/LibWebP/src/dsp/cost_mips32.c
 Source/LibWebP/src/dsp/cost_mips_dsp_r2.c
+Source/LibWebP/src/dsp/cost_neon.c
 Source/LibWebP/src/dsp/cost_sse2.c
 Source/LibWebP/src/dsp/cpu.c
 Source/LibWebP/src/dsp/dec.c
@@ -517,19 +518,22 @@ Source/LibJXR/jxrgluelib
 # MACOSX_DEPLOYMENT_TARGET before calling setup.py
 # If below is not included, or 10.14 and above, the C++ standard headers may
 # not be found.
+extra_compile_args = None
 if sys.platform == 'darwin':
     if 'MACOSX_DEPLOYMENT_TARGET' not in os.environ:
         current_system = version.LooseVersion(platform.mac_ver()[0])
         python_target = version.LooseVersion(sysconfig.get_config_var('MACOSX_DEPLOYMENT_TARGET'))
         if python_target < '10.9' and current_system >= '10.9':
             os.environ['MACOSX_DEPLOYMENT_TARGET'] = '10.9'
-
+        extra_compile_args = ['-Wno-error=implicit-function-declaration']
 
 freeimage = setuptools.Extension(
     name = 'freeimage._freeimage',
     sources = ['freeimage/_freeimage.c'] + SRCS,
     include_dirs = INCLUDE,
-    define_macros = [('__ANSI__', None), ('NO_LCMS', None), ('DISABLE_PERF_MEASUREMENT', None)])
+    define_macros = [('__ANSI__', None), ('NO_LCMS', None), ('DISABLE_PERF_MEASUREMENT', None)],
+    extra_compile_args = extra_compile_args
+)
 
 setuptools.setup(
     name = 'freeimage',

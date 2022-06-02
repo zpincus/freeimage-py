@@ -122,9 +122,14 @@ static void ReadThumbnail(FreeImageIO *io, fi_handle handle, void *data, TIFF *t
 static int s_format_id;
 
 typedef struct {
+	//! FreeImage IO functions
     FreeImageIO *io;
+	//! FreeImage handle
 	fi_handle handle;
+	//! LibTIFF handle
 	TIFF *tif;
+	//! Count the number of thumbnails already read (used to avoid recursion on loading)
+	unsigned thumbnailCount;
 } fi_TIFFIO;
 
 // ----------------------------------------------------------
@@ -184,10 +189,8 @@ Open a TIFF file descriptor for reading or writing
 */
 TIFF *
 TIFFFdOpen(thandle_t handle, const char *name, const char *mode) {
-	TIFF *tif;
-	
 	// Open the file; the callback will set everything up
-	tif = TIFFClientOpen(name, mode, handle,
+	TIFF *tif = TIFFClientOpen(name, mode, handle,
 	    _tiffReadProc, _tiffWriteProc, _tiffSeekProc, _tiffCloseProc,
 	    _tiffSizeProc, _tiffMapProc, _tiffUnmapProc);
 
@@ -460,11 +463,9 @@ CreateImageType(BOOL header_only, FREE_IMAGE_TYPE fit, int width, int height, ui
 			}
 			
 		}
-		else {
-
-			dib = FreeImage_AllocateHeader(header_only, width, height, MIN(bpp, 32), FI_RGBA_RED_MASK, FI_RGBA_GREEN_MASK, FI_RGBA_BLUE_MASK);
+		else if (bpp <= 32) {
+			dib = FreeImage_AllocateHeader(header_only, width, height, bpp, FI_RGBA_RED_MASK, FI_RGBA_GREEN_MASK, FI_RGBA_BLUE_MASK);
 		}
-
 
 	} else {
 		// other bitmap types
@@ -985,22 +986,39 @@ MimeType() {
 
 static BOOL DLL_CALLCONV
 Validate(FreeImageIO *io, fi_handle handle) {	
-	BYTE tiff_id1[] = { 0x49, 0x49, 0x2A, 0x00 };	// Classic TIFF, little-endian
-	BYTE tiff_id2[] = { 0x4D, 0x4D, 0x00, 0x2A };	// Classic TIFF, big-endian
-	BYTE tiff_id3[] = { 0x49, 0x49, 0x2B, 0x00 };	// Big TIFF, little-endian
-	BYTE tiff_id4[] = { 0x4D, 0x4D, 0x00, 0x2B };	// Big TIFF, big-endian
-	BYTE signature[4] = { 0, 0, 0, 0 };
+	// TIFF signatures
+	static const BYTE tiff_C_II[] = { 0x49, 0x49, 0x2A, 0x00 };	// Classic TIFF, little-endian
+	static const BYTE tiff_C_MM[] = { 0x4D, 0x4D, 0x00, 0x2A };	// Classic TIFF, big-endian
+	static const BYTE tiff_B_II[] = { 0x49, 0x49, 0x2B, 0x00 };	// Big TIFF, little-endian
+	static const BYTE tiff_B_MM[] = { 0x4D, 0x4D, 0x00, 0x2B };	// Big TIFF, big-endian
 
-	io->read_proc(signature, 1, 4, handle);
+	// many camera raw files use a TIFF signature ...
+	// ... try to exclude any TIFF if it is a raw file
 
-	if(memcmp(tiff_id1, signature, 4) == 0)
+	// Canon (CR2), little-endian byte order signature
+	static const BYTE CR2_II[] = { 0x49, 0x49, 0x2A, 0x00, 0x10, 0x00, 0x00, 0x00, 0x43, 0x52, 0x02, 0x00 };
+
+	BYTE signature[16] = { 0 };
+
+	if (io->read_proc(signature, sizeof(BYTE), 16, handle) != 16) {
+		return FALSE;
+	}
+
+	if (memcmp(tiff_C_II, signature, 4) == 0) {
+		if (memcmp(CR2_II, signature, 12) == 0) {
+			return FALSE;
+		}
 		return TRUE;
-	if(memcmp(tiff_id2, signature, 4) == 0)
+	}
+	if (memcmp(tiff_C_MM, signature, 4) == 0) {
 		return TRUE;
-	if(memcmp(tiff_id3, signature, 4) == 0)
+	}
+	if (memcmp(tiff_B_II, signature, 4) == 0) {
 		return TRUE;
-	if(memcmp(tiff_id4, signature, 4) == 0)
+	}
+	if (memcmp(tiff_B_MM, signature, 4) == 0) {
 		return TRUE;
+	}
 
 	return FALSE;
 }
@@ -1050,9 +1068,12 @@ static void * DLL_CALLCONV
 Open(FreeImageIO *io, fi_handle handle, BOOL read) {
 	// wrapper for TIFF I/O
 	fi_TIFFIO *fio = (fi_TIFFIO*)malloc(sizeof(fi_TIFFIO));
-	if(!fio) return NULL;
+	if (!fio) {
+		return NULL;
+	}
 	fio->io = io;
 	fio->handle = handle;
+	fio->thumbnailCount = 0;
 
 	if (read) {
 		fio->tif = TIFFFdOpen((thandle_t)fio, "", "r");
@@ -1108,6 +1129,27 @@ check for uncommon bitspersample values (e.g. 10, 12, ...)
 */
 static BOOL 
 IsValidBitsPerSample(uint16 photometric, uint16 bitspersample, uint16 samplesperpixel) {
+	// get the pixel depth in bits
+	const uint16 pixel_depth = bitspersample * samplesperpixel;
+
+	// check for a supported pixel depth
+	switch (pixel_depth) {
+		case 1:
+		case 4:
+		case 8:
+		case 16:
+		case 24:
+		case 32:
+		case 48:
+		case 64:
+		case 96:
+		case 128:
+			// OK, go on
+			break;
+		default:
+			// unsupported pixel depth
+			return FALSE;
+	}
 
 	switch(bitspersample) {
 		case 1:
@@ -1148,6 +1190,8 @@ IsValidBitsPerSample(uint16 photometric, uint16 bitspersample, uint16 samplesper
 		default:
 			return FALSE;
 	}
+	
+	return FALSE;
 }
 
 static TIFFLoadMethod  
@@ -1237,16 +1281,31 @@ Read embedded thumbnail
 static void 
 ReadThumbnail(FreeImageIO *io, fi_handle handle, void *data, TIFF *tiff, FIBITMAP *dib) {
 	FIBITMAP* thumbnail = NULL;
+
+	fi_TIFFIO *fio = (fi_TIFFIO*)data;
+
+	/*
+	Thumbnail loading can cause recursions because of the way 
+	functions TIFFLastDirectory and TIFFSetSubDirectory are working.
+	We use here a hack to count the number of times the ReadThumbnail function was called. 
+	We only allow one call, check for this
+	*/
+	if (fio->thumbnailCount > 0) {
+		return;
+	}
+	else {
+		// update the thumbnail count (used to avoid recursion)
+		fio->thumbnailCount++;
+	}
 	
 	// read exif thumbnail (IFD 1) ...
 	
-	/*
-	// this code can cause unwanted recursion causing an overflow, it is thus disabled until we have a better solution
-	// do we really need to read a thumbnail from the Exif segment ? knowing that TIFF store the thumbnail in the subIFD ...
-	// 
 	toff_t exif_offset = 0;
 	if(TIFFGetField(tiff, TIFFTAG_EXIFIFD, &exif_offset)) {
 		
+		// this code can cause unwanted recursion causing an overflow, because of the way TIFFLastDirectory work
+		// => this is checked using 
+
 		if(!TIFFLastDirectory(tiff)) {
 			// save current position
 			const long tell_pos = io->tell_proc(handle);
@@ -1256,15 +1315,15 @@ ReadThumbnail(FreeImageIO *io, fi_handle handle, void *data, TIFF *tiff, FIBITMA
 			int page = 1;
 			int flags = TIFF_DEFAULT;
 			thumbnail = Load(io, handle, page, flags, data);
+
 			// store the thumbnail (remember to release it before return)
 			FreeImage_SetThumbnail(dib, thumbnail);
-			
+		
 			// restore current position
 			io->seek_proc(handle, tell_pos, SEEK_SET);
 			TIFFSetDirectory(tiff, cur_dir);
 		}
 	}
-	*/
 	
 	// ... or read the first subIFD
 	
@@ -1280,12 +1339,15 @@ ReadThumbnail(FreeImageIO *io, fi_handle handle, void *data, TIFF *tiff, FIBITMA
 				// save current position
 				const long tell_pos = io->tell_proc(handle);
 				const uint16 cur_dir = TIFFCurrentDirectory(tiff);
+
+				// this code can cause unwanted recursion causing an overflow, because of the way TIFFSetSubDirectory work
 				
 				if(TIFFSetSubDirectory(tiff, subIFD_offsets[0])) {
 					// load the thumbnail
 					int page = -1; 
 					int flags = TIFF_DEFAULT;
 					thumbnail = Load(io, handle, page, flags, data);
+
 					// store the thumbnail (remember to release it before return)
 					FreeImage_SetThumbnail(dib, thumbnail);
 				}
@@ -1517,9 +1579,10 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 			// ---------------------------------------------------------------------------------
 			// 8-bit + 8-bit alpha layer loading
 			// ---------------------------------------------------------------------------------
+			const uint16 dst_spp = 2;
 
 			// create a new 8-bit DIB
-			dib = CreateImageType(header_only, image_type, width, height, bitspersample, MIN<uint16>(2, samplesperpixel));
+			dib = CreateImageType(header_only, image_type, width, height, bitspersample, MIN(dst_spp, samplesperpixel));
 			if (dib == NULL) {
 				throw FI_MSG_ERROR_MEMORY;
 			}
@@ -1553,13 +1616,20 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 
 			if(planar_config == PLANARCONFIG_CONTIG && !header_only) {
 
-				BYTE *buf = (BYTE*)malloc(TIFFStripSize(tif) * sizeof(BYTE));
+				const tmsize_t bufsz = TIFFStripSize(tif) * sizeof(BYTE);
+				BYTE *buf = (BYTE*)malloc(bufsz);
 				if(buf == NULL) {
 					throw FI_MSG_ERROR_MEMORY;
 				}
 
+				const uint32 src_width = src_line / samplesperpixel;
 				for (uint32 y = 0; y < height; y += rowsperstrip) {
-					int32 nrow = (y + rowsperstrip > height ? height - y : rowsperstrip);
+					const int32 nrow = (y + rowsperstrip > height ? height - y : rowsperstrip);
+
+					if (nrow * src_width * dst_spp * sizeof(BYTE) > bufsz) {
+						free(buf);
+						throw "Image is corrupted";
+					}
 
 					if (TIFFReadEncodedStrip(tif, TIFFComputeStrip(tif, y, 0), buf, nrow * src_line) == -1) {
 						free(buf);
@@ -1567,17 +1637,17 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 					}
 					for (int l = 0; l < nrow; l++) {
 						BYTE *p = bits;
-						BYTE *b = buf + l * src_line;
+						const BYTE *b = buf + l * src_line;
 
-						for(uint32 x = 0; x < (uint32)(src_line / samplesperpixel); x++) {
+						for(uint32 x = 0; x < src_width; x++) {
 							// copy the 8-bit layer
 							*p = b[0];
 							// convert the 8-bit alpha layer to a trns table
 							trns[ b[0] ] = b[1];
 
 							p++;
-							b += samplesperpixel;
-						}
+							b += dst_spp;
+						} 
 						bits -= dst_pitch;
 					}
 				}
@@ -2041,7 +2111,7 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 				}
 
 				// calculate src line and dst pitch
-				int dst_pitch = FreeImage_GetPitch(dib);
+				unsigned dst_pitch = FreeImage_GetPitch(dib);
 				uint32 tileRowSize = (uint32)TIFFTileRowSize(tif);
 				uint32 imageRowSize = (uint32)TIFFScanlineSize(tif);
 
@@ -2071,7 +2141,7 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 						BYTE *src_bits = tileBuffer;
 						BYTE *dst_bits = bits + rowSize;
 						for(int k = 0; k < nrows; k++) {
-							memcpy(dst_bits, src_bits, src_line);
+							memcpy(dst_bits, src_bits, MIN(dst_pitch, src_line));
 							src_bits += tileRowSize;
 							dst_bits -= dst_pitch;
 						}
