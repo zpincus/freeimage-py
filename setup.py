@@ -537,7 +537,7 @@ freeimage = setuptools.Extension(
 
 setuptools.setup(
     name = 'freeimage',
-    version = '1.1',
+    version = '1.2',
     description = 'freeimage package',
     ext_modules = [freeimage],
     packages = setuptools.find_packages()
