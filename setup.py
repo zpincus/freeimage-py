@@ -528,17 +528,17 @@ if sys.platform == 'darwin':
         extra_compile_args = ['-Wno-error=implicit-function-declaration']
 
 freeimage = setuptools.Extension(
-    name = 'freeimage._freeimage',
-    sources = ['freeimage/_freeimage.c'] + SRCS,
-    include_dirs = INCLUDE,
-    define_macros = [('__ANSI__', None), ('NO_LCMS', None), ('DISABLE_PERF_MEASUREMENT', None)],
-    extra_compile_args = extra_compile_args
+    name='freeimage._freeimage',
+    sources=['freeimage/_freeimage.c'] + SRCS,
+    include_dirs=INCLUDE,
+    define_macros=[('__ANSI__', None), ('NO_LCMS', None), ('DISABLE_PERF_MEASUREMENT', None), ('PNG_ARM_NEON_OPT', 0)],
+    extra_compile_args=extra_compile_args
 )
 
 setuptools.setup(
-    name = 'freeimage',
-    version = '1.2',
-    description = 'freeimage package',
-    ext_modules = [freeimage],
-    packages = setuptools.find_packages()
+    name='freeimage',
+    version='1.2',
+    description='freeimage package',
+    ext_modules=[freeimage],
+    packages=setuptools.find_packages()
 )
