@@ -5,9 +5,8 @@ from distutils import version
 import os
 import sys
 
-# below is just all the sources listed in freeimage's Makefile.srcs, with the
-# addition of Source/LibJXR/image/sys/perfTimerANSI.c which is missing for some
-# reason...
+# below is just all the sources listed in freeimage's Makefile.srcs, less the JXR stuff
+# which is breaking on some windows builds and I have no idea how to fix it, so out it goes.
 SRCS = '''
 Source/FreeImage/BitmapAccess.cpp
 Source/FreeImage/ColorLookup.cpp
@@ -36,7 +35,6 @@ Source/FreeImage/PluginJ2K.cpp
 Source/FreeImage/PluginJNG.cpp
 Source/FreeImage/PluginJP2.cpp
 Source/FreeImage/PluginJPEG.cpp
-Source/FreeImage/PluginJXR.cpp
 Source/FreeImage/PluginKOALA.cpp
 Source/FreeImage/PluginMNG.cpp
 Source/FreeImage/PluginPCD.cpp
@@ -458,30 +456,6 @@ Source/LibWebP/src/utils/random_utils.c
 Source/LibWebP/src/utils/rescaler_utils.c
 Source/LibWebP/src/utils/thread_utils.c
 Source/LibWebP/src/utils/utils.c
-Source/LibJXR/image/decode/decode.c
-Source/LibJXR/image/decode/JXRTranscode.c
-Source/LibJXR/image/decode/postprocess.c
-Source/LibJXR/image/decode/segdec.c
-Source/LibJXR/image/decode/strdec.c
-Source/LibJXR/image/decode/strdec_x86.c
-Source/LibJXR/image/decode/strInvTransform.c
-Source/LibJXR/image/decode/strPredQuantDec.c
-Source/LibJXR/image/encode/encode.c
-Source/LibJXR/image/encode/segenc.c
-Source/LibJXR/image/encode/strenc.c
-Source/LibJXR/image/encode/strenc_x86.c
-Source/LibJXR/image/encode/strFwdTransform.c
-Source/LibJXR/image/encode/strPredQuantEnc.c
-Source/LibJXR/image/sys/adapthuff.c
-Source/LibJXR/image/sys/image.c
-Source/LibJXR/image/sys/perfTimerANSI.c
-Source/LibJXR/image/sys/strcodec.c
-Source/LibJXR/image/sys/strPredQuant.c
-Source/LibJXR/image/sys/strTransform.c
-Source/LibJXR/jxrgluelib/JXRGlue.c
-Source/LibJXR/jxrgluelib/JXRGlueJxr.c
-Source/LibJXR/jxrgluelib/JXRGluePFC.c
-Source/LibJXR/jxrgluelib/JXRMeta.c
 '''.strip().split()
 
 INCLUDE = '''
