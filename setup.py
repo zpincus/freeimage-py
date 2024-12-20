@@ -25,7 +25,6 @@ Source/FreeImage/Plugin.cpp
 Source/FreeImage/PluginBMP.cpp
 Source/FreeImage/PluginCUT.cpp
 Source/FreeImage/PluginDDS.cpp
-Source/FreeImage/PluginEXR.cpp
 Source/FreeImage/PluginG3.cpp
 Source/FreeImage/PluginGIF.cpp
 Source/FreeImage/PluginHDR.cpp
@@ -229,112 +228,6 @@ Source/LibOpenJPEG/t1.c
 Source/LibOpenJPEG/t2.c
 Source/LibOpenJPEG/tcd.c
 Source/LibOpenJPEG/tgt.c
-Source/OpenEXR/IexMath/IexMathFpu.cpp
-Source/OpenEXR/IlmImf/b44ExpLogTable.cpp
-Source/OpenEXR/IlmImf/ImfAcesFile.cpp
-Source/OpenEXR/IlmImf/ImfAttribute.cpp
-Source/OpenEXR/IlmImf/ImfB44Compressor.cpp
-Source/OpenEXR/IlmImf/ImfBoxAttribute.cpp
-Source/OpenEXR/IlmImf/ImfChannelList.cpp
-Source/OpenEXR/IlmImf/ImfChannelListAttribute.cpp
-Source/OpenEXR/IlmImf/ImfChromaticities.cpp
-Source/OpenEXR/IlmImf/ImfChromaticitiesAttribute.cpp
-Source/OpenEXR/IlmImf/ImfCompositeDeepScanLine.cpp
-Source/OpenEXR/IlmImf/ImfCompressionAttribute.cpp
-Source/OpenEXR/IlmImf/ImfCompressor.cpp
-Source/OpenEXR/IlmImf/ImfConvert.cpp
-Source/OpenEXR/IlmImf/ImfCRgbaFile.cpp
-Source/OpenEXR/IlmImf/ImfDeepCompositing.cpp
-Source/OpenEXR/IlmImf/ImfDeepFrameBuffer.cpp
-Source/OpenEXR/IlmImf/ImfDeepImageStateAttribute.cpp
-Source/OpenEXR/IlmImf/ImfDeepScanLineInputFile.cpp
-Source/OpenEXR/IlmImf/ImfDeepScanLineInputPart.cpp
-Source/OpenEXR/IlmImf/ImfDeepScanLineOutputFile.cpp
-Source/OpenEXR/IlmImf/ImfDeepScanLineOutputPart.cpp
-Source/OpenEXR/IlmImf/ImfDeepTiledInputFile.cpp
-Source/OpenEXR/IlmImf/ImfDeepTiledInputPart.cpp
-Source/OpenEXR/IlmImf/ImfDeepTiledOutputFile.cpp
-Source/OpenEXR/IlmImf/ImfDeepTiledOutputPart.cpp
-Source/OpenEXR/IlmImf/ImfDoubleAttribute.cpp
-Source/OpenEXR/IlmImf/ImfDwaCompressor.cpp
-Source/OpenEXR/IlmImf/ImfEnvmap.cpp
-Source/OpenEXR/IlmImf/ImfEnvmapAttribute.cpp
-Source/OpenEXR/IlmImf/ImfFastHuf.cpp
-Source/OpenEXR/IlmImf/ImfFloatAttribute.cpp
-Source/OpenEXR/IlmImf/ImfFloatVectorAttribute.cpp
-Source/OpenEXR/IlmImf/ImfFrameBuffer.cpp
-Source/OpenEXR/IlmImf/ImfFramesPerSecond.cpp
-Source/OpenEXR/IlmImf/ImfGenericInputFile.cpp
-Source/OpenEXR/IlmImf/ImfGenericOutputFile.cpp
-Source/OpenEXR/IlmImf/ImfHeader.cpp
-Source/OpenEXR/IlmImf/ImfHuf.cpp
-Source/OpenEXR/IlmImf/ImfInputFile.cpp
-Source/OpenEXR/IlmImf/ImfInputPart.cpp
-Source/OpenEXR/IlmImf/ImfInputPartData.cpp
-Source/OpenEXR/IlmImf/ImfIntAttribute.cpp
-Source/OpenEXR/IlmImf/ImfIO.cpp
-Source/OpenEXR/IlmImf/ImfKeyCode.cpp
-Source/OpenEXR/IlmImf/ImfKeyCodeAttribute.cpp
-Source/OpenEXR/IlmImf/ImfLineOrderAttribute.cpp
-Source/OpenEXR/IlmImf/ImfLut.cpp
-Source/OpenEXR/IlmImf/ImfMatrixAttribute.cpp
-Source/OpenEXR/IlmImf/ImfMisc.cpp
-Source/OpenEXR/IlmImf/ImfMultiPartInputFile.cpp
-Source/OpenEXR/IlmImf/ImfMultiPartOutputFile.cpp
-Source/OpenEXR/IlmImf/ImfMultiView.cpp
-Source/OpenEXR/IlmImf/ImfOpaqueAttribute.cpp
-Source/OpenEXR/IlmImf/ImfOutputFile.cpp
-Source/OpenEXR/IlmImf/ImfOutputPart.cpp
-Source/OpenEXR/IlmImf/ImfOutputPartData.cpp
-Source/OpenEXR/IlmImf/ImfPartType.cpp
-Source/OpenEXR/IlmImf/ImfPizCompressor.cpp
-Source/OpenEXR/IlmImf/ImfPreviewImage.cpp
-Source/OpenEXR/IlmImf/ImfPreviewImageAttribute.cpp
-Source/OpenEXR/IlmImf/ImfPxr24Compressor.cpp
-Source/OpenEXR/IlmImf/ImfRational.cpp
-Source/OpenEXR/IlmImf/ImfRationalAttribute.cpp
-Source/OpenEXR/IlmImf/ImfRgbaFile.cpp
-Source/OpenEXR/IlmImf/ImfRgbaYca.cpp
-Source/OpenEXR/IlmImf/ImfRle.cpp
-Source/OpenEXR/IlmImf/ImfRleCompressor.cpp
-Source/OpenEXR/IlmImf/ImfScanLineInputFile.cpp
-Source/OpenEXR/IlmImf/ImfStandardAttributes.cpp
-Source/OpenEXR/IlmImf/ImfStdIO.cpp
-Source/OpenEXR/IlmImf/ImfStringAttribute.cpp
-Source/OpenEXR/IlmImf/ImfStringVectorAttribute.cpp
-Source/OpenEXR/IlmImf/ImfSystemSpecific.cpp
-Source/OpenEXR/IlmImf/ImfTestFile.cpp
-Source/OpenEXR/IlmImf/ImfThreading.cpp
-Source/OpenEXR/IlmImf/ImfTileDescriptionAttribute.cpp
-Source/OpenEXR/IlmImf/ImfTiledInputFile.cpp
-Source/OpenEXR/IlmImf/ImfTiledInputPart.cpp
-Source/OpenEXR/IlmImf/ImfTiledMisc.cpp
-Source/OpenEXR/IlmImf/ImfTiledOutputFile.cpp
-Source/OpenEXR/IlmImf/ImfTiledOutputPart.cpp
-Source/OpenEXR/IlmImf/ImfTiledRgbaFile.cpp
-Source/OpenEXR/IlmImf/ImfTileOffsets.cpp
-Source/OpenEXR/IlmImf/ImfTimeCode.cpp
-Source/OpenEXR/IlmImf/ImfTimeCodeAttribute.cpp
-Source/OpenEXR/IlmImf/ImfVecAttribute.cpp
-Source/OpenEXR/IlmImf/ImfVersion.cpp
-Source/OpenEXR/IlmImf/ImfWav.cpp
-Source/OpenEXR/IlmImf/ImfZip.cpp
-Source/OpenEXR/IlmImf/ImfZipCompressor.cpp
-Source/OpenEXR/Imath/ImathBox.cpp
-Source/OpenEXR/Imath/ImathColorAlgo.cpp
-Source/OpenEXR/Imath/ImathFun.cpp
-Source/OpenEXR/Imath/ImathMatrixAlgo.cpp
-Source/OpenEXR/Imath/ImathRandom.cpp
-Source/OpenEXR/Imath/ImathShear.cpp
-Source/OpenEXR/Imath/ImathVec.cpp
-Source/OpenEXR/Iex/IexBaseExc.cpp
-Source/OpenEXR/Iex/IexThrowErrnoExc.cpp
-Source/OpenEXR/Half/half.cpp
-Source/OpenEXR/IlmThread/IlmThread.cpp
-Source/OpenEXR/IlmThread/IlmThreadMutex.cpp
-Source/OpenEXR/IlmThread/IlmThreadPool.cpp
-Source/OpenEXR/IlmThread/IlmThreadSemaphore.cpp
-Source/OpenEXR/IexMath/IexMathFloatExc.cpp
 Source/LibRawLite/internal/dcraw_common.cpp
 Source/LibRawLite/internal/dcraw_fileio.cpp
 Source/LibRawLite/internal/demosaic_packs.cpp
@@ -467,23 +360,12 @@ Source/LibPNG
 Source/LibTIFF4
 Source/ZLib
 Source/LibOpenJPEG
-Source/OpenEXR
-Source/OpenEXR/Half
-Source/OpenEXR/Iex
-Source/OpenEXR/IlmImf
-Source/OpenEXR/IlmThread
-Source/OpenEXR/Imath
-Source/OpenEXR/IexMath
 Source/LibRawLite
 Source/LibRawLite/dcraw
 Source/LibRawLite/internal
 Source/LibRawLite/libraw
 Source/LibRawLite/src
 Source/LibWebP
-Source/LibJXR
-Source/LibJXR/common/include
-Source/LibJXR/image/sys
-Source/LibJXR/jxrgluelib
 '''.strip().split()
 
 # For mac, ensure extensions are built for macos 10.9 when compiling on a
@@ -492,14 +374,14 @@ Source/LibJXR/jxrgluelib
 # MACOSX_DEPLOYMENT_TARGET before calling setup.py
 # If below is not included, or 10.14 and above, the C++ standard headers may
 # not be found.
-extra_compile_args = None
+extra_compile_args = []
 if sys.platform == 'darwin':
     if 'MACOSX_DEPLOYMENT_TARGET' not in os.environ:
         current_system = version.LooseVersion(platform.mac_ver()[0])
         python_target = version.LooseVersion(sysconfig.get_config_var('MACOSX_DEPLOYMENT_TARGET'))
         if python_target < '10.9' and current_system >= '10.9':
             os.environ['MACOSX_DEPLOYMENT_TARGET'] = '10.9'
-        extra_compile_args = ['-Wno-error=implicit-function-declaration']
+        extra_compile_args.append('-Wno-error=implicit-function-declaration')
 
 freeimage = setuptools.Extension(
     name='freeimage._freeimage',
