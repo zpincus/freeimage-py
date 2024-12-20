@@ -349,6 +349,7 @@ Source/LibWebP/src/utils/random_utils.c
 Source/LibWebP/src/utils/rescaler_utils.c
 Source/LibWebP/src/utils/thread_utils.c
 Source/LibWebP/src/utils/utils.c
+Source/OpenEXR/Half/half.cpp
 '''.strip().split()
 
 INCLUDE = '''
@@ -366,6 +367,7 @@ Source/LibRawLite/internal
 Source/LibRawLite/libraw
 Source/LibRawLite/src
 Source/LibWebP
+Source/OpenEXR
 '''.strip().split()
 
 # For mac, ensure extensions are built for macos 10.9 when compiling on a
