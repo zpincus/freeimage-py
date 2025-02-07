@@ -6,7 +6,7 @@
 // - Rui Lopes (ruiglopes@yahoo.com)
 // - Detlev Vendt (detlev.vendt@brillit.de)
 // - Petr Pytelka (pyta@lightcomp.com)
-// - Hervé Drolon (drolon@infonie.fr)
+// - Hervï¿½ Drolon (drolon@infonie.fr)
 //
 // This file is part of FreeImage 3
 //
@@ -267,14 +267,12 @@ FreeImage_Initialise(BOOL load_local_plugins_only) {
 	        s_plugins->AddNode(InitHDR);
 			s_plugins->AddNode(InitG3);
 			s_plugins->AddNode(InitSGI);
-			s_plugins->AddNode(InitEXR);
 			s_plugins->AddNode(InitJ2K);
 			s_plugins->AddNode(InitJP2);
 			s_plugins->AddNode(InitPFM);
 			s_plugins->AddNode(InitPICT);
 			s_plugins->AddNode(InitRAW);
 			s_plugins->AddNode(InitWEBP);
-			s_plugins->AddNode(InitJXR);
 			
 			// external plugin initialization
 
